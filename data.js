@@ -224,10 +224,10 @@ export const data = [
     name: "Holographic Technologies",
     parentIds: ["49", "54"]
   },
-      {
+  {
     id: "53",
-    name: "Ho??s",
-    parentIds: ["1"]
+    name: "Happy Co",
+    parentIds: ["3"]
   },
   {
     id: "54",

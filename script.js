@@ -30,7 +30,7 @@ const graph = builder(data);
 
 // set the layout functions
 const nodeRadius = 20;
-const nodeSize = [nodeRadius * 2, nodeRadius * 2];
+const nodeSize = [nodeRadius * 4.5, nodeRadius * 2];
 // this truncates the edges so we can render arrows nicely
 const shape = d3dag.tweakShape(nodeSize, d3dag.shapeEllipse);
 // use this to render our edges
@@ -38,12 +38,33 @@ const line = d3.line().curve(d3.curveMonotoneY);
 // here's the layout operator, uncomment some of the settings
 const layout = d3dag
   .sugiyama()
-  //.layering(d3dag.layeringLongestPath())
-  //.decross(d3dag.decrossOpt())
+  // Layering
+  // Default: .layering(d3dag.layeringSimplex())
+  .layering(d3dag.layeringLongestPath())
+
+  // Decross
+  //.decross(d3dag.decrossOpt()) slow
+  //"Two Layer Greedy (fast)",
+
+//.decross(d3dag.decrossTwoLayer().order(d3dag.twolayerGreedy().base(d3dag.twolayerAgg())))
+//Two Layer Agg (fast)
+//.decross(d3dag.decrossTwoLayer().order(d3dag.twolayerAgg()))
+
+/*
+    ["Two Layer Agg (fast)", d3.decrossTwoLayer().order(d3.twolayerAgg())],
+    ["Optimal (can be very slow)", d3.decrossOpt()],
+    [
+      "Two Layer Opt (can be very slow)",
+      d3.decrossTwoLayer().order(d3.twolayerOpt())
+    ]
+  ])*/
+
+  
   //.coord(d3dag.coordGreedy())
   //.coord(d3dag.coordQuad())
+  //.coord(d3dag.coordCenter())
   .nodeSize(nodeSize)
-  .gap([nodeRadius, nodeRadius])
+  .gap([nodeRadius * 1.5, nodeRadius * 3])
   .tweaks([shape]);
 
 // actually perform the layout and get the final size
@@ -66,9 +87,9 @@ const colorMap = new Map(
 const svg = d3
   .select("#svg")
   // pad a little for link thickness
-  .attr("viewBox", `0 0 ${width + 2} ${height + 2}`)
-//.style("width", width + 4)
-//.style("height", height + 4);
+  .attr("viewBox", `0 0 ${width + 7} ${height + 7}`)
+/*.style("width", width + 8)
+.style("height", height + 20);*/
 const trans = svg.transition().duration(750);
 
 // nodes
@@ -83,15 +104,13 @@ svg
       .attr("opacity", 0)
       .call((enter) => {
         enter
-          .append("circle")
+          /*.append("circle")
           .attr("r", nodeRadius)
+          .attr("fill", (n) => colorMap.get(n.data.id));*/
+          .append("ellipse")
+          .attr("rx", nodeRadius * 2)
+          .attr("ry", nodeRadius)
           .attr("fill", (n) => colorMap.get(n.data.id));
-          //.append("ellipse")
-          //.attr("cx", 200)
-          //.attr("cy", 200)
-          //.attr("rx", nodeRadius * 2)
-          //.attr("ry", nodeRadius)
-          //.attr("fill", (n) => colorMap.get(n.data.id));
         enter
           .append("text")
           .text((d) => d.data.name)
@@ -99,8 +118,10 @@ svg
           .attr("font-size", "10px")
           .attr("font-family", "sans-serif")
           .attr("text-anchor", "middle")
-          .attr("alignment-baseline", "middle")
+          .call(wrap, 80)
+          .attr("dominant-baseline", "central")
           .attr("fill", "white");
+          
         enter.transition(trans).attr("opacity", 1);
       })
   );
@@ -145,7 +166,7 @@ svg
       .append("path")
       .attr("d", ({ points }) => line(points))
       .attr("fill", "none")
-      .attr("stroke-width", 3)
+      .attr("stroke-width", 2)
       .attr(
         "stroke",
         ({ source, target }) => `url(#${source.data.id}--${target.data.id})`
@@ -175,3 +196,27 @@ svg
       .attr("stroke-dasharray", `${arrowLen},${arrowLen}`)
       .call((enter) => enter.transition(trans).attr("opacity", 1))
   );
+
+        function wrap(text, width) {
+          text.each(function() {
+            var text = d3.select(this),
+              words = text.text().split(/\s+/).reverse(),
+              word,
+              line = [],
+              lineNumber = 0,
+              lineHeight = 1.1, // ems
+              y = text.attr("y"),
+              dy = parseFloat(text.attr("dy")),
+              tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+            while (word = words.pop()) {
+              line.push(word);
+              tspan.text(line.join(" "));
+              if (tspan.node().getComputedTextLength() > width) {
+                line.pop();
+                tspan.text(line.join(" "));
+                line = [word];
+                tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", lineHeight + "em").text(word);
+              }
+            }
+          });
+        }
