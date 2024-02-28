@@ -1,5 +1,6 @@
 import * as d3 from "https://cdn.skypack.dev/d3@7.8.4";
 import * as d3dag from "https://cdn.skypack.dev/d3-dag@1.0.0-1";
+import { data } from "./data.js";
 
 // ----- //
 // Setup //
@@ -18,44 +19,6 @@ function arrowTransform({ points }) {
   return `translate(${x2}, ${y2}) rotate(${angle})`;
 }
 
-const data = [
-  {
-    id: "1",
-    name: "Familia",
-    parentIds: []
-  },
-  {
-    id: "2",
-    name: "A",
-    parentIds: ["1"]
-  },
-  {
-    id: "3",
-    name: "Y",
-    parentIds: ["1"]
-  },
-  {
-    id: "4",
-    name: "B",
-    parentIds: ["2"]
-  },
-  {
-    id: "5",
-    name: "D",
-    parentIds: ["2", "6"]
-  },
-  {
-    id: "6",
-    name: "C",
-    parentIds: ["2"]
-  },
-  {
-    id: "7",
-    name: "Z",
-    parentIds: ["3", "6"]
-  }
-]
-
 
 // create our builder and turn the raw data into a graph
 const builder = d3dag.graphStratify();
@@ -67,7 +30,7 @@ const graph = builder(data);
 
 // set the layout functions
 const nodeRadius = 20;
-const nodeSize = [nodeRadius * 4, nodeRadius * 2];
+const nodeSize = [nodeRadius * 2, nodeRadius * 2];
 // this truncates the edges so we can render arrows nicely
 const shape = d3dag.tweakShape(nodeSize, d3dag.shapeEllipse);
 // use this to render our edges
@@ -80,7 +43,7 @@ const layout = d3dag
   //.coord(d3dag.coordGreedy())
   //.coord(d3dag.coordQuad())
   .nodeSize(nodeSize)
-  .gap([nodeRadius * 2.5, nodeRadius])
+  .gap([nodeRadius, nodeRadius])
   .tweaks([shape]);
 
 // actually perform the layout and get the final size
@@ -103,7 +66,7 @@ const colorMap = new Map(
 const svg = d3
   .select("#svg")
   // pad a little for link thickness
-  .attr("viewBox", `0 0 ${width + 4} ${height + 4}`)
+  .attr("viewBox", `0 0 ${width + 2} ${height + 2}`)
 //.style("width", width + 4)
 //.style("height", height + 4);
 const trans = svg.transition().duration(750);
@@ -120,19 +83,20 @@ svg
       .attr("opacity", 0)
       .call((enter) => {
         enter
-          //.append("circle")
-          //.attr("r", nodeRadius)
-          //.attr("fill", (n) => colorMap.get(n.data.id));
-          .append("ellipse")
+          .append("circle")
+          .attr("r", nodeRadius)
+          .attr("fill", (n) => colorMap.get(n.data.id));
+          //.append("ellipse")
           //.attr("cx", 200)
           //.attr("cy", 200)
-          .attr("rx", nodeRadius * 2)
-          .attr("ry", nodeRadius)
-          .attr("fill", (n) => colorMap.get(n.data.id));
+          //.attr("rx", nodeRadius * 2)
+          //.attr("ry", nodeRadius)
+          //.attr("fill", (n) => colorMap.get(n.data.id));
         enter
           .append("text")
           .text((d) => d.data.name)
-          .attr("font-weight", "bold")
+          //.attr("font-weight", "bold")
+          .attr("font-size", "10px")
           .attr("font-family", "sans-serif")
           .attr("text-anchor", "middle")
           .attr("alignment-baseline", "middle")
@@ -206,7 +170,7 @@ svg
       .attr("transform", arrowTransform)
       .attr("opacity", 0)
       .attr("stroke", "white")
-      .attr("stroke-width", 2)
+      .attr("stroke-width", 1)
       // use this to put a white boundary on the tip of the arrow
       .attr("stroke-dasharray", `${arrowLen},${arrowLen}`)
       .call((enter) => enter.transition(trans).attr("opacity", 1))
